@@ -1,14 +1,2 @@
 [build-system]
-# Since setuptools-conda uses itself (from the source directory) to build itself, this
-# is the full list of our run-time requirements. Of course, pip will not be able to
-# install these conda dependencies and we don't want it to - this package should be
-# built with "python -m setuptools_conda build .", not with 'pip wheel' or anything
-# else.
-requires = [
-    "setuptools",
-    "wheel",
-    "setuptools_scm",
-    "importlib_metadata",
-    "distlib",
-    "toml",
-]
+requires = ["setuptools", "wheel", "setuptools_scm"]

@@ -1,47 +1,66 @@
-import sys
-import os
-import shutil
-import subprocess
-import shlex
 from setuptools import Command
 import json
-from textwrap import dedent
-import hashlib
 from pathlib import Path
-import configparser
-import re
-import itertools
-
-import toml
-import distlib.markers
 
 
-# Command line args that can be used in place of "setup.py" for projects that lack a
-# setup.py, runs a minimal setup.py similar to what pip does for projects with no
-# setup.py.
-_SETUP_PY_STUB = [
-    "-c",
-    'import sys, setuptools; sys.argv[0] = __file__ = "setup.py"; setuptools.setup()',
-]
+def get_pyproject_toml_entry(proj, *keys):
+    """Return [build-system] requires as read from proj/pyproject.toml, if any"""
+    # this import is here to avoid bootstrapping issues when building wheels for this
+    # package itself
+    import toml
+    pyproject_toml = Path(proj, 'pyproject.toml')
+    if not pyproject_toml.exists():
+        return None
+    config = toml.load(pyproject_toml)
+    try:
+        for key in keys:
+            config = config[key]
+        return config
+    except KeyError:
+        return None
 
 
-def setup_py(project_dir):
-    """Returns a list of command line arguments to be used in place of ["setup.py"]. If
-    setup.py exists, then this is just ["setup.py"]. Otherwise, if setup.cfg or
-    pyproject.toml exists, returns args that pass a code snippet to Python with "-c" to
-    execute a minimal setup.py calling setuptools.setup(). If none of pyproject.toml,
-    setup.cfg, or setup.py exists, raises an exception."""
-    if Path(project_dir, 'setup.py').exists():
-        return ['setup.py']
-    elif any(Path(project_dir, s).exists() for s in ['setup.cfg', 'pyproject.toml']):
-        return _SETUP_PY_STUB
-    msg = f"""{project_dir} does not look like a python project directory: contains no
-        setup.py, setup.cfg, or pyproject.toml"""
-    raise RuntimeError(' '.join(msg.split()))
+def has_environment_markers(setup_requires, install_requires, extras_requires):
+    """Given a list of install_requires and a dict of extras_requires, return if there
+    are any environment markers"""
+    for item in install_requires:
+        if ';' in item:
+            return True
+    for key in extras_requires:
+        if key.startswith(':'):
+            # an extras_requires item being used as an environment marker, an old
+            # pattern allowed by setuptools
+            return True
+    return False
 
 
 class ci_distinfo(Command):
-    description = "Ger info on package purity and platform-dependence of requirements"
+    description = "Get package info useful for building on CI"
+    user_options = []
+
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
 
     def run(self):
-        print("ci_distinfo running")
+
+        setup_requires = get_pyproject_toml_entry('.', 'build-system', 'requires')
+        if setup_requires is None:
+            setup_requires = self.distribution.setup_requires
+
+        info = {
+            'name': self.distribution.get_name(),
+            'version': self.distribution.get_version(),
+            'is_pure': not (
+                self.distribution.has_ext_modules()
+                or self.distribution.has_c_libraries()
+            ),
+            'has_env_markers': has_environment_markers(
+                setup_requires,
+                self.distribution.install_requires,
+                self.distribution.extras_require,
+            ),
+        }
+        print(json.dumps(info, indent=4))
