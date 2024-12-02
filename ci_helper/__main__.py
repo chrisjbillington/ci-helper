@@ -87,13 +87,29 @@ def main():
         help="Name of field to output as a single json value, "
         + "if not given, all info is output as json",
     )
+    parser_distinfo.add_argument(
+        'project_directory',
+        help="Directory of Python project",
+    )
 
     args = parser.parse_args()
 
-    if args.command == 'distinfo':
-        # distinfo_args = parser_distinfo.parse_args()
+    if args.command == 'pythons':
+        pythons = get_pythons()
+        if args.cibw:
+            print(' '.join([f"cp{p.replace('.', '')}-*" for p in pythons]))
+        else:
+            print(','.join(pythons))
+
+    elif args.command == 'defaultpython':
+        pythons = get_pythons()
+        print(pythons[-2])
+
+    elif args.command == 'distinfo':
         cmd = [sys.executable, *setup_py('.'), '-q', 'ci_distinfo']
-        result = subprocess.run(cmd, check=True, capture_output=True)
+        result = subprocess.run(
+            cmd, cwd=args.project_directory, check=True, capture_output=True
+        )
         info = result.stdout.decode('utf8')
         if args.field is not None:
             info = json.loads(info)
@@ -104,15 +120,7 @@ def main():
                 print(json.dumps(value))
         else:
             print(info)
-    elif args.command == 'pythons':
-        pythons = get_pythons()
-        if args.cibw:
-            print(' '.join([f"cp{p.replace('.', '')}-*" for p in pythons]))
-        else:
-            print(','.join(pythons))
-    elif args.command == 'defaultpython':
-        pythons = get_pythons()
-        print(pythons[-2])
+
     sys.exit(0)
 
 

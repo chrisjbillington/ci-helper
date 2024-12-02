@@ -47,11 +47,6 @@ pip install ci-helper
 ## Usage:
 
 ```bash
-# The second-most recent minor Python release, a good choice for the version to run
-# tools from:
-$ ci-helper defaultpython
-3.12
-
 # All stable, non-end-of-life Python versions:
 $ ci-helper pythons
 3.9,3.10,3.11,3.12,3.13
@@ -60,11 +55,16 @@ $ ci-helper pythons
 $ ci-helper pythons --cibw
 cp39-* cp310-* cp311-* cp312-* cp313-*
 
+# The second-most recent minor Python release, a good choice for the version to run
+# tools from:
+$ ci-helper defaultpython
+3.12
+
 # Info about the source Python project in the current working directory - name, version,
 # whether it's a pure Python package, and whether its build or run requirements contain
 # any # environment markers (that is, whether its requirements vary by platform or
 # Python version):
-$ ci-helper distinfo
+$ ci-helper distinfo .
 {
     "name": "ci-helper",
     "version": "0.1.dev1+g5043fb5.d20241202",
@@ -73,13 +73,13 @@ $ ci-helper distinfo
 }
 
 # Same but one field at a time, more convenient for assigning to environment variables:
-$ ci-helper distinfo name
+$ ci-helper distinfo name .
 ci-helper
-$ ci-helper distinfo version
+$ ci-helper distinfo version .
 0.1.0
-$ ci-helper distinfo is_pure
+$ ci-helper distinfo is_pure .
 true
-$ ci-helper distinfo has_env_markers
+$ ci-helper distinfo has_env_markers .
 false 
 ```
 
@@ -112,7 +112,7 @@ options:
 ```
 
 ```shell
-$ ci-helper defaultpython -h
+$ ci-helper default_python -h
 usage: ci-helper defaultpython [-h]
 
 options:
@@ -121,11 +121,15 @@ options:
 
 ```shell
 $ ci-helper distinfo -h
-usage: ci-helper distinfo [-h] [{name,version,is_pure,has_env_markers}]
+usage: ci-helper distinfo [-h]
+                          [{name,version,is_pure,has_env_markers}]
+                          project_directory
 
 positional arguments:
   {name,version,is_pure,has_env_markers}
-                        Name of field to output as a single json value, if not given, all info is output as json
+                        Name of field to output as a single json value, if not
+                        given, all info is output as json
+  project_directory     Directory of Python project
 
 options:
   -h, --help            show this help message and exit
