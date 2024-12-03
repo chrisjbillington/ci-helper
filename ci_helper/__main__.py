@@ -106,10 +106,20 @@ def main():
         print(pythons[-2])
 
     elif args.command == 'distinfo':
-        cmd = [sys.executable, *setup_py('.'), '-q', 'ci_distinfo']
-        result = subprocess.run(
-            cmd, cwd=args.project_directory, check=True, capture_output=True
-        )
+        cmd = [
+            sys.executable,
+            *setup_py('.'),
+            '-q',
+            '--command-packages=ci_helper.command',
+            'ci_distinfo',
+        ]
+        try:
+            result = subprocess.run(
+                cmd, cwd=args.project_directory, check=True, capture_output=True
+            )
+        except subprocess.CalledProcessError as e:
+            sys.stderr.write(e.stderr.decode('utf8'))
+            raise
         info = result.stdout.decode('utf8')
         if args.field is not None:
             info = json.loads(info)

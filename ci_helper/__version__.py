@@ -1,9 +1,6 @@
 import os
 from pathlib import Path
-try:
-    import importlib.metadata as importlib_metadata
-except ImportError:
-    import importlib_metadata
+import importlib.metadata as importlib_metadata
 
 VERSION_SCHEME = {
     "version_scheme": os.getenv("SCM_VERSION_SCHEME", "guess-next-dev"),
