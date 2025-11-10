@@ -34,7 +34,7 @@ def setup_py(project_dir):
 
 def get_pythons():
     """Return stable, non-end-of-life Python versions in X.Y format"""
-    URL = "https://raw.githubusercontent.com/python/devguide/refs/heads/main/include/release-cycle.json"
+    URL = "https://peps.python.org/api/release-cycle.json"
     response = requests.get(URL, timeout=30)
     if not response.ok:
         raise ValueError(f"{response.status_code} {response.reason}")
